@@ -1,7 +1,7 @@
-import TradingHeader from '../components/trading/TradingHeader';
-import MainChart from '../components/trading/MainChart';
-import OrderPanel from '../components/trading/OrderPanel';
-import MarketList from '../components/trading/MarketList';
+import TradingHeader from '../../components/trading/TradingHeader';
+import MainChart from '../../components/trading/MainChart';
+import OrderPanel from '../../components/trading/OrderPanel';
+import MarketList from '../../components/trading/MarketList';
 
 export default function TradingPage() {
   return (
