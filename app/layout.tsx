@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Sidebar from './components/Sidebar';
+import Providers from './providers'; // 💡 Providers 임포트
 
 export const metadata: Metadata = {
-  title: 'Foxstocks Dashboard',
-  description: 'A dashboard UI for Foxstocks, created with Next.js',
+  title: 'Quant Sim Dashboard',
+  description: 'A dashboard UI for Qunat Sim, created with Next.js',
 };
 
 export default function RootLayout({
@@ -15,10 +15,8 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <div className="flex min-h-screen p-4">
-          <Sidebar />
-          <main className="flex-1 pl-8">{children}</main>
-        </div>
+        {/* 💡 Providers로 전체를 감싸줍니다. */}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

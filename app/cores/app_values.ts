@@ -3,5 +3,5 @@
  * 앱 이름, API 엔드포인트, 기본 설정 등을 이곳에서 관리합니다.
  */
 export const AppValues = {
-  appName: 'Foxstocks',
+  appName: 'Quant Sim',
 };
