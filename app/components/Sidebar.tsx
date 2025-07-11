@@ -13,6 +13,7 @@ import {
   FaRegLightbulb,
 } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
+import {AppValues} from "@/app/cores/app_values";
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: <MdDashboard /> },
@@ -29,7 +30,7 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-white rounded-3xl flex flex-col p-6 shadow-sm">
-      <div className="text-2xl font-bold text-fox-dark-blue mb-12">Foxstocks</div>
+      <div className="text-2xl font-bold text-fox-dark-blue mb-12">{AppValues.appName}</div>
 
       <p className="text-xs text-fox-text-gray font-semibold mb-2">USER PANEL</p>
       <nav className="flex-1">
