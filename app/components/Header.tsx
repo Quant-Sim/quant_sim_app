@@ -1,19 +1,37 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient, Session } from '@supabase/auth-helpers-nextjs';
 import { FaSearch, FaBell, FaSignOutAlt } from 'react-icons/fa';
 import Image from 'next/image';
 
 export default function Header() {
-    const { data: session } = useSession();
+    const [session, setSession] = useState<Session | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null); // 드롭다운 DOM을 참조하기 위한 ref
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // 세션에서 사용자 정보를 가져옵니다.
-    const userName = session?.user?.name ?? 'User';
-    const userEmail = session?.user?.email ?? 'user@example.com';
-    const userImage = session?.user?.image ?? '/default-avatar.png'; // public 폴더에 기본 아바타 이미지가 있다고 가정
+    const supabase = createClientComponentClient();
+    const router = useRouter();
+
+    // 컴포넌트가 마운트될 때 Supabase 세션을 가져옵니다.
+    useEffect(() => {
+        const getSession = async () => {
+            const { data } = await supabase.auth.getSession();
+            setSession(data.session);
+        };
+        getSession();
+
+        // 인증 상태 변경(로그인, 로그아웃)을 감지하여 세션을 업데이트합니다.
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session);
+        });
+
+        // 컴포넌트 언마운트 시 리스너를 정리합니다.
+        return () => {
+            authListener?.subscription.unsubscribe();
+        };
+    }, [supabase.auth]);
 
     // 드롭다운 메뉴 바깥을 클릭하면 메뉴가 닫히도록 하는 로직
     useEffect(() => {
@@ -22,14 +40,26 @@ export default function Header() {
                 setIsDropdownOpen(false);
             }
         }
-        // 이벤트 리스너 등록
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            // 컴포넌트가 언마운트될 때 이벤트 리스너 제거
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [dropdownRef]);
 
+    // Supabase 세션에서 사용자 정보를 추출합니다.
+    // Google 로그인: user_metadata.full_name, user_metadata.avatar_url
+    // 이메일 가입: user_metadata.full_name (우리가 직접 넣어준 값)
+    const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
+    const userEmail = session?.user?.email ?? 'user@example.com';
+    const userImage = session?.user?.user_metadata?.avatar_url ?? '/default-avatar.png';
+
+    // 로그아웃 핸들러
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        // 로그아웃 후 로그인 페이지로 이동하고, 페이지를 새로고침하여 상태를 초기화합니다.
+        router.push('/login');
+        router.refresh();
+    };
 
     return (
         <header className="flex items-center justify-between w-full">
@@ -47,9 +77,8 @@ export default function Header() {
                     <FaBell className="text-xl" />
                 </button>
 
-                {/* --- 프로필 드롭다운 섹션 --- */}
+                {/* --- 프로필 드롭다운 섹션 (로직만 수정) --- */}
                 <div className="relative" ref={dropdownRef}>
-                    {/* 사용자 아바타: 클릭하면 드롭다운 토글 */}
                     <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="focus:outline-none">
                         <Image
                             src={userImage}
@@ -60,7 +89,6 @@ export default function Header() {
                         />
                     </button>
 
-                    {/* 드롭다운 메뉴: isDropdownOpen 상태에 따라 표시/숨김 */}
                     {isDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl z-10">
                             <div className="p-4 border-b">
@@ -69,7 +97,7 @@ export default function Header() {
                             </div>
                             <div className="p-2">
                                 <button
-                                    onClick={() => signOut({ callbackUrl: '/login' })}
+                                    onClick={handleSignOut} // 💡 로그아웃 함수 변경
                                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
                                 >
                                     <FaSignOutAlt />

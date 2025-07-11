@@ -1,11 +1,50 @@
 'use client';
-
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import { AppValues } from '@/app/cores/app_values';
 import { FaGoogle } from 'react-icons/fa';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // 4. Supabase 클라이언트와 라우터를 초기화합니다.
+  const supabase = createClientComponentClient();
+  const router = useRouter();
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null); // 이전 에러 메시지 초기화
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError('로그인 정보가 올바르지 않습니다.');
+      console.error('Sign in error:', error.message);
+    } else {
+      // 로그인 성공 시, 홈페이지로 이동하고 페이지를 새로고침하여
+      // 서버의 로그인 상태를 즉시 반영합니다.
+      router.push('/');
+      router.refresh();
+    }
+  };
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+  };
+
+
+
+
   return (
       <div className="bg-white p-8 rounded-xl shadow-lg w-full">
         <div className="text-center mb-8">
@@ -16,7 +55,7 @@ export default function LoginPage() {
         {/* --- Google 로그인 버튼 섹션 --- */}
         <div className="space-y-4">
           <button
-              onClick={() => signIn('google', { callbackUrl: '/' })}
+              onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-800 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
           >
             <FaGoogle className="text-red-500" />
