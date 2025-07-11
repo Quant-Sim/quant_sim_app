@@ -1,19 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { dataSets } from '../data/local/chart-data';
 
-// 샘플 데이터
-const data = [
-    { name: '10 am', value: 8500 },
-    { name: '11 am', value: 10500 },
-    { name: '12 pm', value: 9800 },
-    { name: '01 pm', value: 12400 },
-    { name: '02 pm', value: 11000 },
-    { name: '03 pm', value: 13800 },
-    { name: '04 pm', value: 13200 },
-];
+const timeRanges = ['1D', '5D', '1M', '6M', '1Y', 'Max'];
 
-// 커스텀 툴팁 컴포넌트
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
@@ -27,43 +19,44 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function PortfolioChart() {
+    const [activeRange, setActiveRange] = useState('1D');
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-md h-full">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Portfolio Analytics</h3>
                 <div className="flex gap-4 text-sm font-medium text-gray-500">
-                    <span className="text-fox-purple cursor-pointer">1D</span>
-                    <span className="hover:text-gray-800 cursor-pointer">5D</span>
-                    <span className="hover:text-gray-800 cursor-pointer">1M</span>
-                    <span className="hover:text-gray-800 cursor-pointer">6M</span>
-                    <span className="hover:text-gray-800 cursor-pointer">1Y</span>
-                    <span className="hover:text-gray-800 cursor-pointer">Max</span>
+                    {timeRanges.map((range) => (
+                        <span
+                            key={range}
+                            onClick={() => setActiveRange(range)}
+                            className={`cursor-pointer ${
+                                activeRange === range
+                                    ? 'text-fox-purple font-bold'
+                                    : 'hover:text-gray-800'
+                            }`}
+                        >
+              {range}
+            </span>
+                    ))}
                 </div>
             </div>
             <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                        data={data}
-                        // --- Y축 위치 변경에 따른 마진 수정 ---
-                        // 왼쪽 여백(left)을 줄이고, 오른쪽 여백(right)을 늘려 Y축 레이블 공간을 확보합니다.
-                        margin={{
-                            top: 5,
-                            right: 5, // Y축 레이블이 들어갈 공간
-                            left: 10,
-                            bottom: 5,
-                        }}
+                        // 2. import한 데이터를 사용합니다. (이 부분은 변경 없음)
+                        data={dataSets[activeRange]}
+                        margin={{ top: 5, right: 10, left: 30, bottom: 5 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
                         <XAxis dataKey="name" tickLine={false} axisLine={false} dy={10} tick={{ fill: '#9ca3af' }} />
                         <YAxis
-                            // --- 1. Y축을 오른쪽으로 이동시키는 속성 ---
                             orientation="right"
                             tickLine={false}
                             axisLine={false}
                             tickFormatter={(value) => `$${(value / 1000)}k`}
                             domain={['dataMin - 1000', 'dataMax + 1000']}
                             tick={{ fill: '#9ca3af' }}
-                            // Y축 레이블과 축 사이의 간격을 조정
                             tickMargin={10}
                         />
                         <Tooltip
