@@ -1,8 +1,46 @@
 'use client';
 import { useState } from 'react';
+import { useEffect } from 'react';
 
 export default function OrderPanel() {
   const [activeTab, setActiveTab] = useState('매수');
+
+  // Order type definition
+  type Order = {
+    type: '매수' | '매도';
+    price: number;
+    quantity: number;
+    total: number;
+    timestamp: string;
+  };
+
+  // Orders state
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  // Inputs state
+  const [price, setPrice] = useState<number>(151114000);
+  const [quantity, setQuantity] = useState<number>(0);
+
+  // Handle "+" and "-" buttons for price
+  const changePrice = (delta: number) => {
+    setPrice(prev => Math.max(0, prev + delta));
+  };
+
+  // Handle order
+  const handleOrder = (orderType: '매수' | '매도') => {
+    const total = price * quantity;
+    const newOrder: Order = {
+      type: orderType,
+      price,
+      quantity,
+      total,
+      timestamp: new Date().toLocaleString(),
+    };
+    // Save to state (could also send to backend here)
+    setOrders(prev => [newOrder, ...prev]);
+    // Reset quantity
+    setQuantity(0);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -39,14 +77,24 @@ export default function OrderPanel() {
             <div className="grid grid-cols-3 items-center">
               <label className="font-semibold text-gray-600">매수가격 (KRW)</label>
               <div className="col-span-2 flex items-center border rounded-md">
-                <button className="px-2 text-lg text-gray-400">-</button>
-                <input type="text" defaultValue="151,114,000" className="w-full text-right font-semibold p-1 outline-none" />
-                <button className="px-2 text-lg text-gray-400">+</button>
+                <button className="px-2 text-lg text-gray-400" onClick={() => changePrice(-1000)}>-</button>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={e => setPrice(Number(e.target.value))}
+                  className="w-full text-right font-semibold p-1 outline-none"
+                />
+                <button className="px-2 text-lg text-gray-400" onClick={() => changePrice(1000)}>+</button>
               </div>
             </div>
             <div className="grid grid-cols-3 items-center">
               <label className="font-semibold text-gray-600">주문수량 (BTC)</label>
-              <input type="text" className="col-span-2 border rounded-md p-1 text-right" />
+              <input
+                type="number"
+                value={quantity}
+                onChange={e => setQuantity(Number(e.target.value))}
+                className="col-span-2 border rounded-md p-1 text-right"
+              />
             </div>
             <div className="flex justify-end gap-1">
               {['10%', '25%', '50%', '100%'].map(p => (
@@ -56,12 +104,25 @@ export default function OrderPanel() {
             </div>
             <div className="grid grid-cols-3 items-center">
               <label className="font-semibold text-gray-600">주문총액 (KRW)</label>
-              <p className="col-span-2 text-right font-semibold">0</p>
+              <p className="col-span-2 text-right font-semibold">{(price * quantity).toLocaleString()}</p>
             </div>
           </div>
-          <button className="w-full mt-4 py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600">
-            매수
-          </button>
+          {activeTab === '매수' && (
+            <button
+              onClick={() => handleOrder('매수')}
+              className="w-full mt-4 py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600"
+            >
+              매수
+            </button>
+          )}
+          {activeTab === '매도' && (
+            <button
+              onClick={() => handleOrder('매도')}
+              className="w-full mt-4 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600"
+            >
+              매도
+            </button>
+          )}
         </div>
         <div>
           {/* This would be an order book component in a real app */}
@@ -70,6 +131,35 @@ export default function OrderPanel() {
           </div>
         </div>
       </div>
+      {activeTab === '거래내역' && (
+        <div className="p-4">
+          <h3 className="font-bold mb-2">거래 내역</h3>
+          <div className="overflow-auto max-h-64">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="text-left">시간</th>
+                  <th className="text-left">유형</th>
+                  <th className="text-right">가격</th>
+                  <th className="text-right">수량</th>
+                  <th className="text-right">총액</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order, idx) => (
+                  <tr key={idx}>
+                    <td>{order.timestamp}</td>
+                    <td>{order.type}</td>
+                    <td className="text-right">{order.price.toLocaleString()}</td>
+                    <td className="text-right">{order.quantity}</td>
+                    <td className="text-right">{order.total.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
