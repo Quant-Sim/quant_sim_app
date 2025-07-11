@@ -37,6 +37,12 @@ export default function TradingHeader() {
           </button>
         </div>
       </div>
+      {/* 정보 탭 내용 */}
+      {activeTab === '정보' && (
+        <div className="mt-4 text-sm text-gray-700 space-y-2">
+          <p>회사 소개 : <span className="font-semibold">~~하는 회사</span></p>
+        </div>
+      )}
     </div>
   );
 }
