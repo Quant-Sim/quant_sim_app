@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // TypeScript 타입 선언 - 글로벌 Window 객체에 LightweightCharts 추가
 declare global {
@@ -13,6 +13,11 @@ const MainChart = () => {
   // 차트 컨테이너와 차트 인스턴스를 위한 ref
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
+
+  const [tradeQuantity, setTradeQuantity] = useState<number>(1);
+  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  const [isTrading, setIsTrading] = useState<boolean>(false);
+  const [tradeMessage, setTradeMessage] = useState<string>('');
 
   useEffect(() => {
     // Lightweight Charts 라이브러리 동적 로드 함수
@@ -113,7 +118,7 @@ const MainChart = () => {
       // 거래량 전용 프라이스 스케일 설정
       chart.priceScale('volume').applyOptions({
         scaleMargins: {
-          top: 0.9, // 상단 여백 90% (거래량 영역 높이 10%로 축소)
+          top: 0.9, // 상단 여백 80% (거래량 영역 높이 20%로 축소)
           bottom: 0, // 하단 여백 0%
         },
       });
