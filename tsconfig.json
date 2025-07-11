@@ -4,6 +4,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -17,8 +18,10 @@
         "name": "next"
       }
     ],
+    // 💡 이 부분이 경로 별칭(@)을 설정하는 핵심입니다.
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"] // <--- 이 부분이 중요합니다!
+      "@/*": ["./*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

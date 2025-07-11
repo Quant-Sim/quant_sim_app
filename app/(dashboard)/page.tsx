@@ -1,8 +1,8 @@
-import BalanceCard from './components/BalanceCard';
-import InvestedCard from './components/InvestedCard';
-import MyStocks from './components/MyStocks';
-import PortfolioChart from './components/PortfolioChart';
-import TopBar from './components/TopBar';
+import BalanceCard from '../components/BalanceCard';
+import InvestedCard from '../components/InvestedCard';
+import MyStocks from '../components/MyStocks';
+import PortfolioChart from '../components/PortfolioChart';
+import TopBar from '../components/TopBar';
 
 export default function Home() {
   return (
