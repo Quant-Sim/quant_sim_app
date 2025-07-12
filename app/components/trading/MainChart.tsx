@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Order } from '@/app/components/trading/OrderPanel';
+
 
 declare global {
   interface Window {
@@ -50,11 +50,10 @@ const initialVolumeData: VolumeData[] = [
 ];
 
 interface MainChartProps {
-  onPriceChange?: (price: number) => void;
-  orders: Order[];
+  onPriceChange: (price: number) => void;
 }
 
-const MainChart = ({ onPriceChange, orders }: MainChartProps) => {
+const MainChart = ({ onPriceChange }: MainChartProps) => {
   console.log('🔨 MainChart mounted');
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -161,19 +160,7 @@ const MainChart = ({ onPriceChange, orders }: MainChartProps) => {
     loadChartScriptAndInit();
   }, [candleData, volumeData]);
 
-  useEffect(() => {
-    if (candleSeriesRef.current && orders) {
-      const markers = orders.map(order => ({
-        time: order.time,
-        position: order.type === '매수' ? 'belowBar' : 'aboveBar',
-        color: order.type === '매수' ? '#ef5350' : '#26a69a',
-        shape: order.type === '매수' ? 'arrowUp' : 'arrowDown',
-        text: `${order.type} ${order.price.toLocaleString()}`,
-        id: `order-${order.time}-${order.type}-${order.quantity}`
-      }));
-      candleSeriesRef.current.setMarkers(markers);
-    }
-  }, [orders]);
+
 
    useEffect(() => {
     if (!isChartReady || !candleSeriesRef.current || !volumeSeriesRef.current) return;
@@ -207,7 +194,7 @@ const MainChart = ({ onPriceChange, orders }: MainChartProps) => {
           volumeSeriesRef.current.update(volume);
         }
 
-        onPriceChange?.(candle.close);
+        onPriceChange(candle.close);
       }
     };
 

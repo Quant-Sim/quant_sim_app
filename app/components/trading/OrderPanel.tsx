@@ -15,14 +15,13 @@ export type Order = {
 
 // OrderPanel 컴포넌트가 받을 props의 타입을 정의합니다.
 type OrderPanelProps = {
-  orders: Order[];
   onNewOrder: (order: Omit<Order, 'total' | 'timestamp' | 'time'>) => void;
   currentPrice: number;
   krwBalance: number; // krwBalance prop 추가
   btcBalance: number; // btcBalance prop 추가
 };
 
-export default function OrderPanel({ orders, onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
+export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState('매수');
   const [simpleView, setSimpleView] = useState<'depth' | 'chart'>('depth'); // 간편주문 탭 내부 뷰
   const [quantity, setQuantity] = useState<number>(0);
@@ -32,6 +31,15 @@ export default function OrderPanel({ orders, onNewOrder, currentPrice, krwBalanc
   useEffect(() => {
     setPrice(currentPrice); // currentPrice prop이 변경될 때 주문 가격 업데이트
   }, [currentPrice]);
+
+  // Load persisted orders from backend
+  const [localOrders, setLocalOrders] = useState<Order[]>([]);
+  useEffect(() => {
+    fetch('http://localhost:8080/api/orders')
+      .then(res => res.json())
+      .then((data: Order[]) => setLocalOrders(data))
+      .catch(err => console.error('Failed to load orders:', err));
+  }, []);
 
   // 가격 증감 함수
   const changePrice = (delta: number) => {
@@ -66,7 +74,7 @@ export default function OrderPanel({ orders, onNewOrder, currentPrice, krwBalanc
       quantity: parseFloat(quantity.toFixed(8)), // 수량은 소수점 8자리까지 유지 (비트코인 등은 소수점 길 수 있음)
     });
     // Send the order to backend
-    fetch('http://localhost:8000/api/order', {
+    fetch('http://localhost:8080/api/order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -86,8 +94,7 @@ export default function OrderPanel({ orders, onNewOrder, currentPrice, krwBalanc
     setMessage(null); // 주문 성공 시 메시지 초기화
   };
 
-  // orders가 undefined일 경우를 대비해 기본값으로 빈 배열을 사용합니다.
-  const safeOrders = orders || [];
+  const safeOrders = localOrders;
 
   // 헬퍼 함수: 숫자 포맷팅 (소수점 자릿수와 쉼표)
   const formatPriceKRW = (num: number) => {

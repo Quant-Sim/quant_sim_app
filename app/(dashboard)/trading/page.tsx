@@ -4,13 +4,10 @@ import React, { useState, useEffect } from 'react';
 // 프로젝트 구조에 맞게 경로를 조정하세요.
 import TradingHeader from '@/app/components/trading/TradingHeader';
 import MainChart from '@/app/components/trading/MainChart';
-import OrderPanel, { Order } from '@/app/components/trading/OrderPanel'; // Order 타입 임포트
+import OrderPanel from '@/app/components/trading/OrderPanel'; // Order 타입 임포트 제거
 import MarketList from '@/app/components/trading/MarketList';
 
 export default function TradingPage() {
-  // 주문 목록 상태를 관리합니다. 초기값은 빈 배열로 설정하고, 클라이언트에서 localStorage 로드
-  const [orders, setOrders] = useState<Order[]>([]);
-
   // 현재가를 상태로 관리합니다. MainChart에서 받은 값으로 업데이트됩니다.
   const [currentPrice, setCurrentPrice] = useState<number>(67000000); // 초기값 설정
 
@@ -18,15 +15,9 @@ export default function TradingPage() {
   const [krwBalance, setKrwBalance] = useState<number>(100000000); // 초기 잔고 1억원 (기본값)
   const [btcBalance, setBtcBalance] = useState<number>(0); // 초기 BTC 잔고 0
 
-  // 컴포넌트 마운트 시 localStorage에서 주문 데이터를 로드합니다.
-  // 이 useEffect는 클라이언트에서만 실행되어 Hydration 오류를 방지합니다.
+  // 컴포넌트 마운트 시 localStorage에서 잔고 데이터를 로드하고 상태를 업데이트합니다.
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedOrders = localStorage.getItem('tradeOrders');
-      if (savedOrders) {
-        setOrders(JSON.parse(savedOrders));
-      }
-
       // ⭐️ localStorage에서 잔고 데이터를 로드하고 상태를 업데이트합니다. ⭐️
       const savedKrwBalance = localStorage.getItem('krwBalance');
       if (savedKrwBalance) {
@@ -39,13 +30,6 @@ export default function TradingPage() {
     }
   }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
 
-  // 주문 목록이 변경될 때마다 localStorage에 저장합니다.
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tradeOrders', JSON.stringify(orders));
-    }
-  }, [orders]);
-
   // 잔고가 변경될 때마다 localStorage에 저장합니다.
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -55,7 +39,7 @@ export default function TradingPage() {
   }, [krwBalance, btcBalance]);
 
   // OrderPanel에서 새로운 주문이 발생했을 때 호출될 함수
-  const handleNewOrder = (order: Omit<Order, 'total' | 'timestamp' | 'time'>) => {
+  const handleNewOrder = (order: Omit<any, 'total' | 'timestamp' | 'time'>) => {
     const totalAmount = order.price * order.quantity;
 
     // 잔고 확인 및 업데이트 로직
@@ -81,17 +65,7 @@ export default function TradingPage() {
       setBtcBalance(prev => prev - order.quantity);
     }
 
-    // 새로운 주문 객체 생성
-    const newOrder: Order = {
-      ...order,
-      total: totalAmount,
-      // 한국 시간 HH:MM:SS 형식으로 타임스탬프 생성
-      timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      // 차트 마커용 UNIX 타임스탬프 (초 단위)
-      time: Math.floor(Date.now() / 1000),
-    };
-    // 새로운 주문을 목록의 맨 앞에 추가하여 최신 주문이 먼저 보이도록 합니다.
-    setOrders(prevOrders => [newOrder, ...prevOrders]);
+    // 주문 목록 상태 및 localStorage 저장 관련 코드 제거
   };
 
   return (
@@ -103,11 +77,10 @@ export default function TradingPage() {
       <div className="container mx-auto mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
         {/* 차트와 주문 패널을 포함하는 좌측 큰 컬럼 */}
         <div className="lg:col-span-2 flex flex-col gap-4 w-full h-full">
-          {/* MainChart 컴포넌트: 주문 내역과 현재 가격 업데이트 콜백을 전달합니다. */}
-          <MainChart orders={orders} onPriceChange={setCurrentPrice} />
-          {/* OrderPanel 컴포넌트: 주문 내역, 새 주문 콜백, 현재 가격, 잔고 정보를 전달합니다. */}
+          {/* MainChart 컴포넌트: 현재 가격 업데이트 콜백을 전달합니다. */}
+          <MainChart onPriceChange={setCurrentPrice} />
+          {/* OrderPanel 컴포넌트: 새 주문 콜백, 현재 가격, 잔고 정보를 전달합니다. */}
           <OrderPanel
-            orders={orders}
             onNewOrder={handleNewOrder}
             currentPrice={currentPrice}
             krwBalance={krwBalance}
