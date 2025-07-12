@@ -11,7 +11,7 @@ export default function TradingHeader() {
         <div className="flex items-center gap-3">
           <FaBitcoin className="text-4xl text-yellow-500" />
           <div>
-            <h2 className="text-xl font-bold">황광호 코인 <span className="text-sm font-normal text-gray-500">HWG/KRW</span></h2>
+            <h2 className="text-xl font-bold">황광호날두회사 <span className="text-sm font-normal text-gray-500">HWG/KRW</span></h2>
             <p className="text-2xl font-bold text-red-500 mt-1">151,002,000 <span className="text-lg font-normal">KRW</span></p>
             <p className="text-sm text-red-500 font-semibold">+0.20% ▲301,000</p>
           </div>
@@ -37,6 +37,12 @@ export default function TradingHeader() {
           </button>
         </div>
       </div>
+      {/* 정보 탭 내용 */}
+      {activeTab === '정보' && (
+        <div className="mt-4 text-sm text-gray-700 space-y-2">
+          <p>회사 소개 : <span className="font-semibold">~~하는 회사</span></p>
+        </div>
+      )}
     </div>
   );
 }
