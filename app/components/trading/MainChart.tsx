@@ -1,193 +1,178 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
-import {Property} from "csstype";
-import OrderPanel, { Order } from '@/app/components/trading/OrderPanel'; // Order 타입 임포트
+import React, { useEffect, useRef, useState } from 'react';
+import throttle from 'lodash.throttle';
 
 declare global {
-    interface Window {
-        LightweightCharts: any;
-    }
+  interface Window {
+    LightweightCharts: any;
+  }
 }
 
 interface CandleData {
-    time: number;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
 }
 
 interface VolumeData {
-    time: number;
-    value: number;
-    color: string;
+  time: number;
+  value: number;
+  color: string;
 }
 
 interface MainChartProps {
-    onPriceChange: (price: number) => void;
+  onPriceChange: (price: number) => void;
 }
 
-const MainChart = ({onPriceChange}: MainChartProps) => {
-    console.log('🔨 MainChart mounted');
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<any>(null);
-    const candleSeriesRef = useRef<any>(null);
-    const volumeSeriesRef = useRef<any>(null);
+const MAX_WINDOW_SIZE = 500;     // 윈도잉 최대 봉 개수
+const THROTTLE_INTERVAL = 200;   // ms 단위 업데이트 간격
 
-    const [candleData, setCandleData] = useState<CandleData[]>([]);
-    const [volumeData, setVolumeData] = useState<VolumeData[]>([]);
-    const [isChartReady, setIsChartReady] = useState(false);
-    const isInitialLoad = useRef(true);
+export default function MainChart({ onPriceChange }: MainChartProps) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<any>(null);
+  const candleSeriesRef = useRef<any>(null);
+  const volumeSeriesRef = useRef<any>(null);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const savedCandleData = localStorage.getItem('candleData');
-            const savedVolumeData = localStorage.getItem('volumeData');
-            if (savedCandleData) setCandleData(JSON.parse(savedCandleData));
-            if (savedVolumeData) setVolumeData(JSON.parse(savedVolumeData));
+  // 내부 버퍼 (최대 MAX_WINDOW_SIZE)
+  const candleBufferRef = useRef<CandleData[]>([]);
+  const volumeBufferRef = useRef<VolumeData[]>([]);
+
+  const [isChartReady, setIsChartReady] = useState(false);
+  const isInitialLoad = useRef(true);
+
+  // 1. 차트 초기화
+  useEffect(() => {
+    const initChart = () => {
+      if (!chartContainerRef.current || !window.LightweightCharts) {
+        setTimeout(initChart, 100);
+        return;
+      }
+      if (chartRef.current) {
+        chartRef.current.remove();
+      }
+
+      const chart = window.LightweightCharts.createChart(
+        chartContainerRef.current,
+        {
+          width: chartContainerRef.current.clientWidth,
+          height: 400,
+          layout: { backgroundColor: '#ffffff', textColor: '#000' },
+          grid: { vertLines: { color: '#eee' }, horzLines: { color: '#eee' } },
+          timeScale: { timeVisible: true, secondsVisible: true },
+          rightPriceScale: { scaleMargins: { top: 0.1, bottom: 0.3 } },
+          crosshair: {
+            vertLine: { color: '#758696', width: 1, style: 1 },
+            horzLine: { color: '#758696', width: 1, style: 1 },
+          },
         }
-    }, []);
+      );
+      chartRef.current = chart;
 
-    useEffect(() => {
-        const loadChartScriptAndInit = () => {
-            if (!window.LightweightCharts) {
-                const script = document.createElement('script');
-                script.src = 'https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js';
-                script.async = true;
-                script.onload = initChart;
-                document.head.appendChild(script);
-            } else {
-                initChart();
-            }
-        };
+      const candleSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a',
+        downColor: '#ef5350',
+        borderVisible: false,
+        wickUpColor: '#26a69a',
+        wickDownColor: '#ef5350',
+      });
+      candleSeriesRef.current = candleSeries;
 
-        const initChart = () => {
-            if (!chartContainerRef.current || !window.LightweightCharts) {
-                setTimeout(initChart, 100);
-                return;
-            }
+      const volumeSeries = chart.addHistogramSeries({
+        color: '#26a69a',
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volume',
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: { top: 0.9, bottom: 0 },
+      });
+      volumeSeriesRef.current = volumeSeries;
 
-            if (chartRef.current) {
-                chartRef.current.remove();
-            }
+      // 화면에 맞춰 초기 윈도잉 데이터를 설정
+      chart.timeScale().fitContent();
+      isInitialLoad.current = false;
 
-            const chart = window.LightweightCharts.createChart(chartContainerRef.current, {
-                width: chartContainerRef.current.clientWidth,
-                height: 400,
-                layout: {backgroundColor: '#ffffff', textColor: '#000'},
-                grid: {vertLines: {color: '#eee'}, horzLines: {color: '#eee'}},
-                timeScale: {timeVisible: true, secondsVisible: true},
-                rightPriceScale: {scaleMargins: {top: 0.1, bottom: 0.3}},
-                crosshair: {
-                    vertLine: {color: '#758696', width: 1, style: 1},
-                    horzLine: {color: '#758696', width: 1, style: 1},
-                },
-            });
+      window.addEventListener('resize', () => {
+        chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
+      });
 
-            chartRef.current = chart;
+      setIsChartReady(true);
+    };
 
-            const candleSeries = chart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderVisible: false,
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350',
-            });
-            candleSeries.setData(candleData);
-            candleSeriesRef.current = candleSeries;
+    // LWC 스크립트 로딩
+    if (!window.LightweightCharts) {
+      const script = document.createElement('script');
+      script.src =
+        'https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js';
+      script.async = true;
+      script.onload = initChart;
+      document.head.appendChild(script);
+    } else {
+      initChart();
+    }
 
-            const volumeSeries = chart.addHistogramSeries({
-                color: '#26a69a',
-                priceFormat: {type: 'volume'},
-                priceScaleId: 'volume',
-                scaleMargins: {top: 0.8, bottom: 0},
-            });
-            chart.priceScale('volume').applyOptions({
-                scaleMargins: {top: 0.9, bottom: 0},
-            });
-            volumeSeries.setData(volumeData);
-            volumeSeriesRef.current = volumeSeries;
+    return () => {
+      chartRef.current?.remove();
+      window.removeEventListener('resize', () => {});
+    };
+  }, []);
 
-            if (isInitialLoad.current && chartRef.current) {
-                chartRef.current.timeScale().fitContent();
-                isInitialLoad.current = false;
-            }
+  // 2. WebSocket + 윈도잉 + 스로틀링
+  useEffect(() => {
+    if (!isChartReady) return;
 
-            setIsChartReady(true); // ✅ WebSocket 연결 시작 가능
+    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws`);
 
-            const handleResize = () => {
-                chartRef.current?.applyOptions({
-                    width: chartContainerRef.current?.clientWidth || 0,
-                });
-            };
-            window.addEventListener('resize', handleResize);
+    // 실제 시리즈에 반영할 throttle 함수
+    const throttledApply = throttle(() => {
+      const candles = candleBufferRef.current;
+      const volumes = volumeBufferRef.current;
+      candleSeriesRef.current!.setData(candles);
+      volumeSeriesRef.current!.setData(volumes);
+    }, THROTTLE_INTERVAL);
 
-            return () => {
-                window.removeEventListener('resize', handleResize);
-                chartRef.current?.remove();
-                chartRef.current = null;
-                candleSeriesRef.current = null;
-                volumeSeriesRef.current = null;
-            };
-        };
+    ws.onopen = () => {
+      console.log('✅ WebSocket opened');
+    };
 
-        loadChartScriptAndInit();
-    }, [candleData, volumeData]);
+    ws.onmessage = (evt) => {
+      const data = JSON.parse(evt.data);
+      const { candle, volume, initial } = data;
 
+      // 버퍼에 추가
+      candleBufferRef.current.push(candle);
+      volumeBufferRef.current.push(volume);
 
-    useEffect(() => {
-        if (!isChartReady || !candleSeriesRef.current || !volumeSeriesRef.current) return;
+      // 윈도우 크기 유지
+      if (candleBufferRef.current.length > MAX_WINDOW_SIZE) {
+        candleBufferRef.current.shift();
+        volumeBufferRef.current.shift();
+      }
 
-        console.log('🧠 WebSocket 연결 시작');
-        const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws`);
+      if (!initial) {
+        // 초기 로드 이후에는 throttle 된 업데이트 적용
+        throttledApply();
+        onPriceChange(candle.close);
+      }
+    };
 
-        const candleBuffer: CandleData[] = [];
-        const volumeBuffer: VolumeData[] = [];
-        let initialized = false;
+    ws.onerror = (err) => console.error('❌ WebSocket error', err);
+    ws.onclose = () => console.log('🔌 WebSocket closed');
 
-        ws.onopen = () => console.log('✅ WebSocket opened');
+    return () => {
+      ws.close();
+      throttledApply.cancel();
+    };
+  }, [isChartReady, onPriceChange]);
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const {candle, volume, initial} = data;
-
-            if (initial) {
-                // 초기 데이터면 버퍼에 저장
-                candleBuffer.push(candle);
-                volumeBuffer.push(volume);
-            } else {
-                // 최초 실시간 데이터 도착 시 버퍼 렌더링
-                if (!initialized) {
-                    candleSeriesRef.current.setData([...candleBuffer, candle]);
-                    volumeSeriesRef.current.setData([...volumeBuffer, volume]);
-                    initialized = true;
-                } else {
-                    // 이후는 실시간 업데이트
-                    candleSeriesRef.current.update(candle);
-                    volumeSeriesRef.current.update(volume);
-                }
-
-                onPriceChange(candle.close);
-            }
-        };
-
-        ws.onerror = (error) => console.error('❌ WebSocket error:', error);
-        ws.onclose = () => console.log('🔌 WebSocket closed');
-
-        return () => {
-            ws.close();
-        };
-    }, [isChartReady, onPriceChange]);
-
-
-    return (
-        <div
-            ref={chartContainerRef}
-            className="w-full h-96 bg-white"
-            style={{margin: 0, padding: 0, overflow: 'hidden'}}
-        />
-    );
-};
-
-export default MainChart;
+  return (
+    <div
+      ref={chartContainerRef}
+      className="w-full h-96 bg-white"
+      style={{ margin: 0, padding: 0, overflow: 'hidden' }}
+    />
+  );
+}

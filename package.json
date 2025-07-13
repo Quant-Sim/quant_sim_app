@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "lightweight-charts": "^5.0.8",
+    "lodash": "^4.17.21",
+    "lodash.throttle": "^4.1.1",
     "next": "14.2.3",
     "next-auth": "^4.24.11",
     "react": "^18",

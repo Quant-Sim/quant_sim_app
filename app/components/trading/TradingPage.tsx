@@ -1,116 +1,91 @@
-'use client'; // 클라이언트 컴포넌트임을 명시 (가장 중요)
+'use client';
 
-import React, { useState, useEffect } from 'react';
-// 프로젝트 구조에 맞게 경로를 조정하세요.
-import TradingHeader from '@/app/components/trading/TradingHeader';
-import MainChart from '@/app/components/trading/MainChart';
-import OrderPanel, { Order } from '@/app/components/trading/OrderPanel'; // Order 타입 임포트
-import MarketList from '@/app/components/trading/MarketList';
+import React, { useState, useRef, useEffect } from 'react';
+import { FaBitcoin, FaCog } from 'react-icons/fa';
 
-export default function TradingPage() {
-  // 주문 목록 상태를 관리합니다. 초기값은 빈 배열로 설정하고, 클라이언트에서 localStorage 로드
-  const [orders, setOrders] = useState<Order[]>([]);
+interface TradingHeaderProps {
+  currentPrice: number;   // 부모로부터 내려받는 실시간 가격
+}
 
-  // 현재가를 상태로 관리합니다. MainChart에서 받은 값으로 업데이트됩니다.
-  const [currentPrice, setCurrentPrice] = useState<number>(67000000); // 초기값 설정
+export default function TradingHeader({ currentPrice }: TradingHeaderProps) {
+  const [activeTab, setActiveTab] = useState<'시세' | '정보'>('시세');
+  const prevPriceRef = useRef<number>(currentPrice);
 
-  // 사용자 잔고 상태 추가 (localStorage에서 로드)
-  const [krwBalance, setKrwBalance] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const savedBalance = localStorage.getItem('krwBalance');
-      return savedBalance ? parseFloat(savedBalance) : 100000000; // 초기 잔고 1억원 (기본값)
-    }
-    return 100000000;
+  // 등락폭, 등락률 계산
+  const prevPrice = prevPriceRef.current;
+  const diff = currentPrice - prevPrice;
+  const pct = prevPrice > 0 ? (diff / prevPrice) * 100 : 0;
+  const isUp = diff >= 0;
+
+  // 렌더 끝난 후 prevPriceRef 갱신
+  useEffect(() => {
+    prevPriceRef.current = currentPrice;
+  }, [currentPrice]);
+
+  // 숫자 포맷터
+  const nfKRW = new Intl.NumberFormat('ko-KR');
+  const nfPct = new Intl.NumberFormat('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
   });
-
-  const [btcBalance, setBtcBalance] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const savedBalance = localStorage.getItem('btcBalance');
-      return savedBalance ? parseFloat(savedBalance) : 0; // 초기 BTC 잔고 0
-    }
-    return 0;
-  });
-
-  // 컴포넌트 마운트 시 localStorage에서 주문 데이터를 로드합니다.
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedOrders = localStorage.getItem('tradeOrders');
-      if (savedOrders) {
-        setOrders(JSON.parse(savedOrders));
-      }
-    }
-  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
-
-  // 주문 목록이 변경될 때마다 localStorage에 저장합니다.
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tradeOrders', JSON.stringify(orders));
-    }
-  }, [orders]);
-
-  // 잔고가 변경될 때마다 localStorage에 저장합니다.
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('krwBalance', krwBalance.toString());
-      localStorage.setItem('btcBalance', btcBalance.toString());
-    }
-  }, [krwBalance, btcBalance]);
-
-  // OrderPanel에서 새로운 주문이 발생했을 때 호출될 함수
-  const handleNewOrder = (order: Omit<Order, 'total' | 'timestamp' | 'time'>) => {
-    const totalAmount = order.price * order.quantity;
-
-    // 잔고 확인 및 업데이트 로직
-    if (order.type === '매수') {
-      if (krwBalance < totalAmount) {
-        // OrderPanel에서 메시지 처리
-        console.warn('잔고 부족: 매수 불가');
-        return;
-      }
-      setKrwBalance(prev => prev - totalAmount);
-      setBtcBalance(prev => prev + order.quantity);
-    } else { // 매도
-      if (btcBalance < order.quantity) {
-        // OrderPanel에서 메시지 처리
-        console.warn('BTC 부족: 매도 불가');
-        return;
-      }
-      setKrwBalance(prev => prev + totalAmount);
-      setBtcBalance(prev => prev - order.quantity);
-    }
-
-    const newOrder: Order = {
-      ...order,
-      total: totalAmount,
-      timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), // 한국 시간 HH:MM:SS
-      time: Math.floor(Date.now() / 1000), // 차트 마커용 UNIX 타임스탬프 (초 단위)
-    };
-    // 새로운 주문을 목록의 맨 앞에 추가하여 최신 주문이 먼저 보이도록 합니다.
-    setOrders(prevOrders => [newOrder, ...prevOrders]);
-  };
 
   return (
-    <main className="bg-gray-50 min-h-screen p-4 flex flex-col">
-      {/* TradingHeader 컴포넌트: 잔고 표시 */}
-      
-      <div className="container mx-auto mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
-        {/* 차트와 주문 패널 영역 */}
-        <div className="lg:col-span-2 flex flex-col gap-4 w-full h-full">
-          {/* MainChart에 orders prop과 onPriceChange prop 전달 */}
-          <MainChart onPriceChange={setCurrentPrice} />
-          {/* OrderPanel에 orders, onNewOrder, currentPrice, 잔고 prop 전달 */}
-          <OrderPanel
-            onNewOrder={handleNewOrder}
-            currentPrice={currentPrice}
-            krwBalance={krwBalance}
-            btcBalance={btcBalance}
-          />
+    <div className="bg-white p-4 rounded-lg shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FaBitcoin className="text-4xl text-yellow-500" />
+          <div>
+            {/* 타이틀 */}
+            <h2 className="text-xl font-bold">
+              황광호날두회사{' '}
+              <span className="text-sm font-normal text-gray-500">
+                HWG/KRW
+              </span>
+            </h2>
+            {/* 현재가 */}
+            <p className="text-2xl font-bold text-red-500 mt-1">
+              {nfKRW.format(currentPrice)}{' '}
+              <span className="text-lg font-normal">KRW</span>
+            </p>
+            {/* 등락률 + 등락폭 */}
+            <p className={`text-sm font-semibold ${isUp ? 'text-red-500' : 'text-blue-500'}`}>
+              {isUp && '+'}{nfPct.format(pct)}%{' '}
+              {isUp ? '▲' : '▼'}{nfKRW.format(Math.abs(diff))}
+            </p>
+          </div>
         </div>
-        {/* MarketList 영역 */}
-        <div className="lg:col-span-1 h-full">
-          <MarketList />
+        <div className="flex items-start self-start gap-4">
+          {/* 탭 */}
+          <div className="flex border-b">
+            {['시세', '정보'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`px-6 py-2 text-sm font-semibold ${
+                  activeTab === tab
+                    ? 'border-b-2 border-blue-500 text-blue-500'
+                    : 'text-gray-500'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          {/* 설정 아이콘 */}
+          <button className="p-2 text-gray-500 hover:text-gray-800">
+            <FaCog className="text-xl" />
+          </button>
         </div>
       </div>
-    </main>
+      {/* 정보 탭 내용 */}
+      {activeTab === '정보' && (
+        <div className="mt-4 text-sm text-gray-700 space-y-2">
+          <p>
+            회사 소개 : <span className="font-semibold">~~하는 회사</span>
+          </p>
+          {/* 추가 정보 여기에 */}
+        </div>
+      )}
+    </div>
   );
 }
