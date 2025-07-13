@@ -15,13 +15,14 @@ export type Order = {
 
 // OrderPanel 컴포넌트가 받을 props의 타입을 정의합니다.
 type OrderPanelProps = {
+  orders: Order[]; // 외부에서 전달받는 주문 목록
   onNewOrder: (order: Omit<Order, 'total' | 'timestamp' | 'time'>) => void;
   currentPrice: number;
   krwBalance: number; // krwBalance prop 추가
   btcBalance: number; // btcBalance prop 추가
 };
 
-export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
+export default function OrderPanel({orders, onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState('매수');
   const [simpleView, setSimpleView] = useState<'depth' | 'chart'>('depth'); // 간편주문 탭 내부 뷰
   const [quantity, setQuantity] = useState<number>(0);
