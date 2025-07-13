@@ -25,11 +25,10 @@ interface VolumeData {
 }
 
 interface MainChartProps {
-    orders: Order[];
     onPriceChange: (price: number) => void;
 }
 
-const MainChart = ({orders, onPriceChange}: MainChartProps) => {
+const MainChart = ({onPriceChange}: MainChartProps) => {
     console.log('🔨 MainChart mounted');
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<any>(null);
