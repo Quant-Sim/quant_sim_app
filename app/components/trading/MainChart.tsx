@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-
+import React, {useEffect, useRef, useState} from 'react';
+import {Property} from "csstype";
+import OrderPanel, { Order } from '@/app/components/trading/OrderPanel'; // Order 타입 임포트
 
 declare global {
     interface Window {
@@ -22,11 +23,12 @@ interface VolumeData {
     value: number;
     color: string;
 }
+
 interface MainChartProps {
     onPriceChange: (price: number) => void;
 }
 
-const MainChart = ({ onPriceChange }: MainChartProps) => {
+const MainChart = ({onPriceChange}: MainChartProps) => {
     console.log('🔨 MainChart mounted');
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<any>(null);
@@ -73,13 +75,13 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
             const chart = window.LightweightCharts.createChart(chartContainerRef.current, {
                 width: chartContainerRef.current.clientWidth,
                 height: 400,
-                layout: { backgroundColor: '#ffffff', textColor: '#000' },
-                grid: { vertLines: { color: '#eee' }, horzLines: { color: '#eee' } },
-                timeScale: { timeVisible: true, secondsVisible: true },
-                rightPriceScale: { scaleMargins: { top: 0.1, bottom: 0.3 } },
+                layout: {backgroundColor: '#ffffff', textColor: '#000'},
+                grid: {vertLines: {color: '#eee'}, horzLines: {color: '#eee'}},
+                timeScale: {timeVisible: true, secondsVisible: true},
+                rightPriceScale: {scaleMargins: {top: 0.1, bottom: 0.3}},
                 crosshair: {
-                    vertLine: { color: '#758696', width: 1, style: 1 },
-                    horzLine: { color: '#758696', width: 1, style: 1 },
+                    vertLine: {color: '#758696', width: 1, style: 1},
+                    horzLine: {color: '#758696', width: 1, style: 1},
                 },
             });
 
@@ -97,12 +99,12 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
 
             const volumeSeries = chart.addHistogramSeries({
                 color: '#26a69a',
-                priceFormat: { type: 'volume' },
+                priceFormat: {type: 'volume'},
                 priceScaleId: 'volume',
-                scaleMargins: { top: 0.8, bottom: 0 },
+                scaleMargins: {top: 0.8, bottom: 0},
             });
             chart.priceScale('volume').applyOptions({
-                scaleMargins: { top: 0.9, bottom: 0 },
+                scaleMargins: {top: 0.9, bottom: 0},
             });
             volumeSeries.setData(volumeData);
             volumeSeriesRef.current = volumeSeries;
@@ -134,7 +136,6 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
     }, [candleData, volumeData]);
 
 
-
     useEffect(() => {
         if (!isChartReady || !candleSeriesRef.current || !volumeSeriesRef.current) return;
 
@@ -149,7 +150,7 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            const { candle, volume, initial } = data;
+            const {candle, volume, initial} = data;
 
             if (initial) {
                 // 초기 데이터면 버퍼에 저장
@@ -184,7 +185,7 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
         <div
             ref={chartContainerRef}
             className="w-full h-96 bg-white"
-            style={{ margin: 0, padding: 0, overflow: 'hidden' }}
+            style={{margin: 0, padding: 0, overflow: 'hidden'}}
         />
     );
 };

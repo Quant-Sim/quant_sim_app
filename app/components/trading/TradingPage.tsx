@@ -97,10 +97,9 @@ export default function TradingPage() {
         {/* 차트와 주문 패널 영역 */}
         <div className="lg:col-span-2 flex flex-col gap-4 w-full h-full">
           {/* MainChart에 orders prop과 onPriceChange prop 전달 */}
-          <MainChart orders={orders} onPriceChange={setCurrentPrice} />
+          <MainChart onPriceChange={setCurrentPrice} />
           {/* OrderPanel에 orders, onNewOrder, currentPrice, 잔고 prop 전달 */}
           <OrderPanel
-            orders={orders}
             onNewOrder={handleNewOrder}
             currentPrice={currentPrice}
             krwBalance={krwBalance}

@@ -21,7 +21,7 @@ type OrderPanelProps = {
   btcBalance: number; // btcBalance prop 추가
 };
 
-export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
+export default function OrderPanel({onNewOrder, currentPrice, krwBalance, btcBalance }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState('매수');
   const [simpleView, setSimpleView] = useState<'depth' | 'chart'>('depth'); // 간편주문 탭 내부 뷰
   const [quantity, setQuantity] = useState<number>(0);
@@ -35,7 +35,7 @@ export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBa
   // Load persisted orders from backend
   const [localOrders, setLocalOrders] = useState<Order[]>([]);
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/order`)
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/backend/order`)
       .then(res => res.json())
       .then((data: Order[]) => setLocalOrders(data))
       .catch(err => console.error('Failed to load orders:', err));
@@ -74,7 +74,7 @@ export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBa
       quantity: parseFloat(quantity.toFixed(8)), // 수량은 소수점 8자리까지 유지 (비트코인 등은 소수점 길 수 있음)
     });
     // Send the order to backend
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/order`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/backend/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
