@@ -6,6 +6,18 @@ import { AppValues } from '@/app/cores/app_values';
 import { FaGoogle } from 'react-icons/fa';
 
 export default function LoginPage() {
+  const handleGoogleSignIn = async () => {
+    const result = await signIn('google', { redirect: false, callbackUrl: '/' });
+
+    if (result?.ok) {
+      // 로그인 성공 시 실행할 함수 호출
+      console.log('로그인 성공!');
+    } else {
+      // 실패 처리
+      console.error('로그인 실패:', result);
+    }
+  };
+
   return (
       <div className="bg-white p-8 rounded-xl shadow-lg w-full">
         <div className="text-center mb-8">

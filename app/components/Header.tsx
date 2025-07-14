@@ -67,7 +67,6 @@ export default function Header() {
             setTimeout(() => setToastVisible(false), 3000); // 3초 후 자동 숨김
         };
 
-        ws.onerror = (e) => console.error("WebSocket Error:", e);
 
         return () => ws.close();
     }, []);

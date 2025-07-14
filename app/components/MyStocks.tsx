@@ -1,9 +1,12 @@
-import { FaArrowRight } from 'react-icons/fa';
+'use client';
 
-const MiniChart = ({ points, color } : { points: string, color: string }) => (
-  <svg width="100" height="40" viewBox="0 0 100 40" className="opacity-70">
-    <polyline fill="none" stroke={color} strokeWidth="2" points={points} />
-  </svg>
+import {FaArrowRight} from 'react-icons/fa';
+import {Stock, useUser} from "../context/UserContext";
+
+const MiniChart = ({points, color}: { points: string, color: string }) => (
+    <svg width="100" height="40" viewBox="0 0 100 40" className="opacity-70">
+        <polyline fill="none" stroke={color} strokeWidth="2" points={points}/>
+    </svg>
 );
 
 const stocks = [
@@ -15,32 +18,37 @@ const stocks = [
 ];
 
 export default function MyStocks() {
-  return (
-    <div>
-      <h2 className="text-lg font-bold text-fox-dark-blue mb-4">My Stocks</h2>
-      <div className="grid grid-cols-6 gap-4">
-        {stocks.map((stock) => (
-          <div key={stock.symbol} className={`p-4 rounded-xl ${stock.color}`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-bold text-fox-dark-blue">{stock.symbol}</p>
-                <p className="text-xs text-gray-500">{stock.name}</p>
-              </div>
-              <p className={`text-xs font-semibold ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stock.change}</p>
+    const user = useUser();
+
+    if (!user) return null;
+
+    return (
+        <div>
+            <h2 className="text-lg font-bold text-fox-dark-blue mb-4">My Stocks</h2>
+            <div className="grid grid-cols-6 gap-4">
+                {user.stocks.map((stock: Stock) => (
+                    <div key={stock.symbol} className={`p-4 rounded-xl ${stock.color}`}>
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="font-bold text-fox-dark-blue">{stock.symbol}</p>
+                                <p className="text-xs text-gray-500">{stock.name}</p>
+                            </div>
+                            <p className={`text-xs font-semibold ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stock.change}</p>
+                        </div>
+                        <div className="mt-2">
+                            <p className="text-xs text-gray-500">Current Value</p>
+                            <p className="text-2xl font-bold text-fox-dark-blue">${stock.value}</p>
+                        </div>
+                        <div className="mt-2">
+                            <MiniChart points={stock.points} color={stock.chartColor}/>
+                        </div>
+                    </div>
+                ))}
+                <div
+                    className="flex items-center justify-center bg-fox-purple rounded-xl cursor-pointer hover:opacity-90">
+                    <FaArrowRight className="text-white text-2xl"/>
+                </div>
             </div>
-            <div className="mt-2">
-              <p className="text-xs text-gray-500">Current Value</p>
-              <p className="text-2xl font-bold text-fox-dark-blue">${stock.value}</p>
-            </div>
-            <div className="mt-2">
-              <MiniChart points={stock.points} color={stock.chartColor} />
-            </div>
-          </div>
-        ))}
-        <div className="flex items-center justify-center bg-fox-purple rounded-xl cursor-pointer hover:opacity-90">
-            <FaArrowRight className="text-white text-2xl" />
         </div>
-      </div>
-    </div>
-  );
+    );
 }
