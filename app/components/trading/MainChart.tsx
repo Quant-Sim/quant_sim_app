@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import throttle from 'lodash.throttle';
+
 
 declare global {
     interface Window {
@@ -138,8 +138,8 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
    useEffect(() => {
     if (!isChartReady || !candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-    console.log('🧠 WebSocket 연결 시작');
-    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}`);
+        console.log('🧠 WebSocket 연결 시작');
+        const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws`);
 
     const candleBuffer: CandleData[] = [];
     const volumeBuffer: VolumeData[] = [];
