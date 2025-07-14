@@ -52,7 +52,7 @@ export default function Header() {
         };
     }, [dropdownRef]);
 
-    // ✅ WebSocket으로 뉴스 수신
+    // WebSocket으로 뉴스 수신
     useEffect(() => {
         const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE_URL;
         const ws = new WebSocket(`${WS_BASE}/ws/news`);
@@ -61,7 +61,7 @@ export default function Header() {
             const news = JSON.parse(event.data) as NewsItem;
             setNewsList((prev) => [news, ...prev.slice(0, 4)]); // 최대 5개 유지
 
-            // ✅ 토스트 알림 띄우기
+            // 토스트 알림 띄우기
             setToastMessage(news.headline);
             setToastVisible(true);
             setTimeout(() => setToastVisible(false), 3000); // 3초 후 자동 숨김
@@ -74,7 +74,7 @@ export default function Header() {
 
     return (
         <>
-            {/* ✅ 토스트 알림 UI */}
+            {/* 토스트 알림 UI */}
             {toastVisible && (
                 <div className="fixed top-4 right-4 bg-white border border-gray-300 shadow-lg rounded px-4 py-3 z-50 animate-fade-in flex items-start justify-between gap-4 w-96">
                     <div>
@@ -103,7 +103,7 @@ export default function Header() {
                         />
                     </div>
 
-                    {/* ✅ 알림 아이콘 + 드롭다운 */}
+                    {/* 알림 아이콘 + 드롭다운 */}
                     <div className="relative" ref={newsRef}>
                         <button
                             onClick={() => setIsNewsOpen(!isNewsOpen)}
