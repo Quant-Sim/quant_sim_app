@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import throttle from 'lodash.throttle';
 
 // Order 타입을 외부에서 사용할 수 있도록 export 합니다.
 // 차트와 데이터를 공유하기 위함입니다.
@@ -74,7 +75,7 @@ export default function OrderPanel({ onNewOrder, currentPrice, krwBalance, btcBa
       quantity: parseFloat(quantity.toFixed(8)), // 수량은 소수점 8자리까지 유지 (비트코인 등은 소수점 길 수 있음)
     });
     // Send the order to backend
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/order`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
