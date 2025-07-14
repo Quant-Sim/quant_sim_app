@@ -135,7 +135,7 @@ export default function MainChart({ onPriceChange }: MainChartProps) {
     }, THROTTLE_INTERVAL);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket opened');
+      console.log('✅ Chart WebSocket opened');
     };
 
     ws.onmessage = (evt) => {
@@ -159,8 +159,8 @@ export default function MainChart({ onPriceChange }: MainChartProps) {
       }
     };
 
-    ws.onerror = (err) => console.error('❌ WebSocket error', err);
-    ws.onclose = () => console.log('🔌 WebSocket closed');
+    ws.onerror = (err) => console.error('❌ Chart WebSocket error', err);
+    ws.onclose = () => console.log('🔌 Chart WebSocket closed');
 
     return () => {
       ws.close();

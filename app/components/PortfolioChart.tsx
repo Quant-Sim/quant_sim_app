@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { dataSets } from '../data/local/chart-data';
+import {Portfolio, useUser} from "@/app/context/UserContext";
 
-const timeRanges = ['1D', '5D', '1M', '6M', '1Y', 'Max'];
+type timeRanges = keyof Portfolio;
+const rangeKeys: timeRanges[] = ["1D", "5D", "1M", "6M", "1Y", "Max"];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -20,13 +22,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function PortfolioChart() {
     const [activeRange, setActiveRange] = useState('1D');
+    const user = useUser();
+
+    if (!user) return null;
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-md h-full">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Portfolio Analytics</h3>
                 <div className="flex gap-4 text-sm font-medium text-gray-500">
-                    {timeRanges.map((range) => (
+                    {rangeKeys.map((range) => (
                         <span
                             key={range}
                             onClick={() => setActiveRange(range)}
@@ -45,7 +50,7 @@ export default function PortfolioChart() {
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                         // 2. import한 데이터를 사용합니다. (이 부분은 변경 없음)
-                        data={dataSets[activeRange]}
+                        data={user.portfolio[activeRange as keyof Portfolio]}
                         margin={{ top: 5, right: 10, left: 30, bottom: 5 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
