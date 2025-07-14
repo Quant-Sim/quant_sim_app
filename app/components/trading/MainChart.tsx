@@ -139,7 +139,7 @@ const MainChart = ({ onPriceChange }: MainChartProps) => {
     if (!isChartReady || !candleSeriesRef.current || !volumeSeriesRef.current) return;
 
     console.log('🧠 WebSocket 연결 시작');
-    const ws = new WebSocket('ws://localhost:8080');
+    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}`);
 
     const candleBuffer: CandleData[] = [];
     const volumeBuffer: VolumeData[] = [];
