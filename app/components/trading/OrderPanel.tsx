@@ -311,4 +311,4 @@ export default function OrderPanel({onNewOrder, currentPrice, krwBalance, btcBal
       </div>
     </div>
   );
-}
+};
