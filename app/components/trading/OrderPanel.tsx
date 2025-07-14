@@ -94,7 +94,7 @@ export default function OrderPanel({onNewOrder, currentPrice, krwBalance, btcBal
     setMessage(null); // 주문 성공 시 메시지 초기화
   };
 
-  const safeOrders = localOrders;
+const safeOrders = Array.isArray(localOrders) ? localOrders : [];
 
   // 헬퍼 함수: 숫자 포맷팅 (소수점 자릿수와 쉼표)
   const formatPriceKRW = (num: number) => {
@@ -160,6 +160,7 @@ export default function OrderPanel({onNewOrder, currentPrice, krwBalance, btcBal
                   </tr>
                 </thead>
                 <tbody>
+                  
                   {safeOrders.length > 0 ? (
                     safeOrders.slice(0, 15).map((order, idx) => ( // 최근 15개만 표시
                       <tr key={idx} className={`align-middle ${order.type === '매수' ? 'text-red-600' : 'text-blue-600'}`}>
@@ -311,4 +312,4 @@ export default function OrderPanel({onNewOrder, currentPrice, krwBalance, btcBal
       </div>
     </div>
   );
-}
+};
