@@ -135,7 +135,7 @@ export default function MainChart({ onPriceChange }: MainChartProps) {
     }, THROTTLE_INTERVAL);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket opened');
+      console.log(' WebSocket opened');
     };
 
     ws.onmessage = (evt) => {
