@@ -1,6 +1,7 @@
 'use client';
 import React, {createContext, useContext, useEffect, useState} from "react";
 import {useSession} from "next-auth/react";
+import {StockInfo} from "@/app/context/PriceContext";
 
 export type User = {
     username: string;
@@ -10,15 +11,17 @@ export type User = {
     is_active: boolean;
     balance: number;
     invested_money: number;
-    stocks: Stock[]; // 혹은 stocks: Stock[]; (Stock 타입 정의 시)
+    stocks: MyStock[]; // 혹은 stocks: Stock[]; (Stock 타입 정의 시)
     portfolio: Portfolio;
 };
 
-export type Stock = {
+export type MyStock = {
     name: string;         // 회사 이름
     symbol: string;       // 주식 코드
-    value: string;        // 현재 주가 (문자열 형태로 전달됨)
-    change: string;       // 변동폭 (예: "+5.63")
+    price: number;
+    quantity: number;
+    total: number;        // 보유 주식 총액 (예: 100주 * 5000원 = 500000원)
+    change: number;       // 변동폭 (예: "+5.63")
     color: string;        // 배경 색상 클래스 (Tailwind CSS 클래스)
     chartColor: string;   // 차트 색상 (Hex 색상 코드)
     points: string;       // SVG polyline points
@@ -45,15 +48,29 @@ const UserContext = createContext<User | null>(null);
 export const UserProvider = ({children}: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const {data: session, status} = useSession(); // 👈 로그인 상태 가져오기
+    const [stockInfos, setStockInfos] = useState<StockInfo[]>([]);
 
     useEffect(() => {
         if (status !== "authenticated" || !session?.user?.email) return;
         const socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws/user/${session?.user?.email}`);
 
-        socket.onopen = () => console.log('✅User WebSocket opened');
+        socket.onopen = () => {
+            console.log('✅User WebSocket opened');
+            fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/backend/stock/list`)
+                .then((response) => response.json())
+                .then((stockInfo: StockInfo[]) => {
+                    setStockInfos(stockInfo);
+                })
+                .catch((error) => {
+                    console.error('Failed to fetch stock list:', error);
+                });
+        };
 
         socket.onmessage = (event) => {
             const updatedUser = JSON.parse(event.data);
+            updatedUser['name'] = stockInfos.find(
+                (stock) => stock.symbol === updatedUser['symbol']
+            )?.name ?? updatedUser['symbol'];
             setUser(updatedUser);
             console.log("🧪 User updated:", updatedUser); // 추가
         };
