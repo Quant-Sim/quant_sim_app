@@ -3,6 +3,7 @@
 import {FaArrowRight} from 'react-icons/fa';
 import {MyStock, useUser} from "../context/UserContext";
 import {usePriceWebSocketData} from "@/app/context/PriceContext";
+import {useMemo} from "react";
 
 const MiniChart = ({points, color}: { points: string, color: string }) => (
     <svg width="100" height="40" viewBox="0 0 100 40" className="opacity-70">
@@ -62,6 +63,11 @@ export default function MyStocks() {
     const {user} = useUser();
     const {prices} = usePriceWebSocketData();
 
+    const nfKRW = useMemo(
+        () => new Intl.NumberFormat('ko-KR'),
+        []
+    );
+
     if (!user) return null;
 
     return (
@@ -79,7 +85,7 @@ export default function MyStocks() {
                         </div>
                         <div className="mt-2">
                             <p className="text-xs text-gray-500">Current Value</p>
-                            <p className="text-xls font-bold text-fox-dark-blue">{(stock.quantity * (prices[stock.symbol]?.candle.close ?? 0)).toFixed(0)} won</p>
+                            <p className="text-xs font-bold text-fox-dark-blue">{nfKRW.format(parseInt((stock.quantity * (prices[stock.symbol]?.candle.close ?? 0)).toFixed(0)))} KRW</p>
                         </div>
                         <div className="mt-2">
                             <MiniChart points={stock.points} color={stock.chartColor}/>
