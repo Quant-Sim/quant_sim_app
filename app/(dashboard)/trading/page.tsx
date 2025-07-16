@@ -22,17 +22,6 @@ export default function TradingPage() {
     });
     const krwBalance = useMemo(() => user?.balance ?? 0, [user]);
 
-    const handleNewOrder = useCallback((order: { type: '매수' | '매도'; price: number; quantity: number }) => {
-        const total = order.price * order.quantity;
-
-        if (order.type === '매수') {
-            if (krwBalance < total) {
-                console.warn('잔고 부족: 매수 불가');
-                return;
-            }
-        }
-    }, [krwBalance, btcBalance]);
-
     return (
         <main className="bg-gray-50 min-h-screen p-4 flex flex-col">
             {/* 상단: 잔고 및 현재가 표시 */}
@@ -48,7 +37,6 @@ export default function TradingPage() {
                         symbol={currentStockInfo.symbol}
                     />
                     <OrderPanel
-                        onNewOrder={handleNewOrder}
                         symbol={currentStockInfo.symbol}
                     />
                 </div>
