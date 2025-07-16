@@ -4,7 +4,7 @@ import {FaArrowRight} from 'react-icons/fa';
 import {useUser} from '../context/UserContext';
 
 export default function InvestedCard() {
-    const user = useUser();
+    const {user} = useUser();
 
     if (!user) return null;
 

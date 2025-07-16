@@ -3,47 +3,56 @@
 import React, {useState, useEffect} from 'react';
 import {usePriceWebSocketData} from "@/app/context/PriceContext";
 import {useUser} from "@/app/context/UserContext";
+import {useOrderWebSocketData} from "@/app/context/OrderContext";
 
 // Order 타입을 외부에서 사용할 수 있도록 export 합니다.
 // 차트와 데이터를 공유하기 위함입니다.
-export type Order = {
-    type: '매수' | '매도';
-    price: number;
-    quantity: number;
-    total: number;
-    timestamp: string;
-    time: number; // 차트 마커 표시를 위한 UNIX 타임스탬프 (초 단위)
-};
 
 // OrderPanel 컴포넌트가 받을 props의 타입을 정의합니다.
 type OrderPanelProps = {
-    onNewOrder: (order: Omit<Order, 'total' | 'timestamp' | 'time'>) => void;
     symbol: string
 };
 
-export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
+export default function OrderPanel({symbol}: OrderPanelProps) {
     const {stockInfos, prices} = usePriceWebSocketData();
-    const user = useUser();
+    const {user, setUser} = useUser();
+    const {orders} = useOrderWebSocketData()
 
     const [activeTab, setActiveTab] = useState('매수');
     const [simpleView, setSimpleView] = useState<'depth' | 'chart'>('depth'); // 간편주문 탭 내부 뷰
     const [quantity, setQuantity] = useState<number>(0);
     const [price, setPrice] = useState<number>(prices[symbol]?.candle?.close);
     const [message, setMessage] = useState<string | null>(null); // 사용자 메시지 상태
-    const krwBalance = user?.balance ?? 0; // 사용자 잔고 (KRW)
-    const btcBalance = user?.stocks.find(
+    const [krwBalance, setKrwBalance] = useState<number>(user?.balance ?? 0);
+    const [btcBalance, setBtcBalance] = useState<number>(user?.stocks.find(
         stock => stock.symbol === symbol
-    )?.quantity ?? 0;
+    )?.quantity ?? 0);
+    const [localOrders, setLocalOrders] = useState<any[]>([]); // 로컬 주문 상태
+
+    useEffect(() => {
+        setLocalOrders((prevOrders) => {
+            return orders[symbol];
+        });
+    }, [orders]);
+
+    useEffect(() => {
+        setBtcBalance(user?.stocks.find(
+            stock => stock.symbol === symbol
+        )?.quantity ?? 0); // currentPrice prop이 변경될 때 주문 가격 업데이트
+    }, [symbol, user?.stocks]);
+
+    useEffect(() => {
+        setKrwBalance(user?.balance ?? 0); // 잔고가 변경될 때마다 업데이트
+    }, [user?.balance]);
+
     useEffect(() => {
         setPrice(prices[symbol]?.candle?.close); // currentPrice prop이 변경될 때 주문 가격 업데이트
     }, [prices]);
 
     // Load persisted orders from backend
-    const [localOrders, setLocalOrders] = useState<Order[]>([]);
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/backend/order/${symbol}`)
             .then(res => res.json())
-            .then((data: Order[]) => setLocalOrders(data))
             .catch(err => console.error('Failed to load orders:', err));
     }, []);
 
@@ -73,12 +82,6 @@ export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
                 return;
             }
         }
-
-        onNewOrder({
-            type: orderType,
-            price,
-            quantity: parseFloat(quantity.toFixed(8)), // 수량은 소수점 8자리까지 유지 (비트코인 등은 소수점 길 수 있음)
-        });
         // Send the order to backend
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/backend/order`, {
@@ -97,10 +100,6 @@ export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || '주문에 실패했습니다.');
             }
-            const newOrder: Order = await response.json();
-            setLocalOrders((prevOrders) => {
-                return [newOrder, ...prevOrders];
-            });
             // alert('주문이 성공적으로 처리되었습니다.');
         } catch (error) {
             console.error("Order failed:", error);
@@ -252,7 +251,7 @@ export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
                                         <input
                                             type="number"
                                             value={quantity || ''}
-                                            onChange={e => setQuantity(Number(e.target.value))}
+                                            onChange={e => setQuantity(parseFloat(Number(e.target.value).toFixed(3)))}
                                             className="col-span-2 border rounded-md p-1 text-right"
                                             placeholder="BTC"
                                             step="0.0001" // 소수점 단위 조절 (필요에 따라)

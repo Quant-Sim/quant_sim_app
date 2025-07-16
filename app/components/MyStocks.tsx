@@ -59,7 +59,8 @@ const stocks = [
 ];
 
 export default function MyStocks() {
-    const user = useUser();
+    const {user} = useUser();
+    const {prices} = usePriceWebSocketData();
 
     if (!user) return null;
 
@@ -74,11 +75,11 @@ export default function MyStocks() {
                                 <p className="font-bold text-fox-dark-blue">{stock.symbol}</p>
                                 <p className="text-xs text-gray-500">{stock.name}</p>
                             </div>
-                            <p className={`text-xs font-semibold ${stock.change>=0 ? 'text-green-600' : 'text-red-600'}`}>{stock.change}</p>
+                            <p className={`text-xs font-semibold ${(stock.quantity * (prices[stock.symbol]?.candle.close ?? 0) / stock.total) >= 1 ? 'text-green-600' : 'text-red-600'}`}>{parseFloat((stock.quantity * (prices[stock.symbol]?.candle.close ?? 0) / stock.total * 100 - 100).toFixed(3)) }%</p>
                         </div>
                         <div className="mt-2">
                             <p className="text-xs text-gray-500">Current Value</p>
-                            <p className="text-2xl font-bold text-fox-dark-blue">${stock.total}</p>
+                            <p className="text-xls font-bold text-fox-dark-blue">{(stock.quantity * (prices[stock.symbol]?.candle.close ?? 0)).toFixed(0)} won</p>
                         </div>
                         <div className="mt-2">
                             <MiniChart points={stock.points} color={stock.chartColor}/>

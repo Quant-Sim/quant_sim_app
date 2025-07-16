@@ -3,7 +3,7 @@
 import {useUser} from "../context/UserContext"
 
 export default function BalanceCard() {
-    const user = useUser();
+    const {user} = useUser();
     if(!user) return null;
 
     return (

@@ -13,7 +13,7 @@ export type User = {
     invested_money: number;
     stocks: MyStock[]; // 혹은 stocks: Stock[]; (Stock 타입 정의 시)
     portfolio: Portfolio;
-};
+} | null;
 
 export type MyStock = {
     name: string;         // 회사 이름
@@ -42,11 +42,15 @@ export type PortfolioItem = {
     change: number;  // 전일 대비 변화율 (예: 0.023 = 2.3%)
 };
 
+type UserContextType = {
+    user: User;
+    setUser: (user: User) => void;
+}
 
-const UserContext = createContext<User | null>(null);
+const UserContext = createContext<UserContextType | null>(null);
 
 export const UserProvider = ({children}: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User>(null);
     const {data: session, status} = useSession(); // 👈 로그인 상태 가져오기
     const [stockInfos, setStockInfos] = useState<StockInfo[]>([]);
 
@@ -80,9 +84,13 @@ export const UserProvider = ({children}: { children: React.ReactNode }) => {
         return () => socket.close();
     }, [status, session?.user?.email]);
 
-    return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
+    return <UserContext.Provider value={{user, setUser}}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => {
-    return useContext(UserContext);
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error("useUser must be used within a UserProvider");
+    }
+    return context;
 };
