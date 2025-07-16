@@ -59,7 +59,7 @@ const stocks = [
 ];
 
 export default function MyStocks() {
-    const user = useUser();
+    const {user} = useUser();
 
     if (!user) return null;
 

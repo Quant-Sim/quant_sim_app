@@ -23,7 +23,7 @@ type OrderPanelProps = {
 
 export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
     const {stockInfos, prices} = usePriceWebSocketData();
-    const user = useUser();
+    const {user, setUser} = useUser();
 
     const [activeTab, setActiveTab] = useState('매수');
     const [simpleView, setSimpleView] = useState<'depth' | 'chart'>('depth'); // 간편주문 탭 내부 뷰
@@ -31,9 +31,16 @@ export default function OrderPanel({onNewOrder, symbol}: OrderPanelProps) {
     const [price, setPrice] = useState<number>(prices[symbol]?.candle?.close);
     const [message, setMessage] = useState<string | null>(null); // 사용자 메시지 상태
     const krwBalance = user?.balance ?? 0; // 사용자 잔고 (KRW)
-    const btcBalance = user?.stocks.find(
+    const [btcBalance, setBtcBalance] = useState<number>(user?.stocks.find(
         stock => stock.symbol === symbol
-    )?.quantity ?? 0;
+    )?.quantity ?? 0);
+
+    useEffect(() => {
+        setBtcBalance(user?.stocks.find(
+            stock => stock.symbol === symbol
+        )?.quantity ?? 0); // currentPrice prop이 변경될 때 주문 가격 업데이트
+    }, [symbol, user?.stocks]);
+
     useEffect(() => {
         setPrice(prices[symbol]?.candle?.close); // currentPrice prop이 변경될 때 주문 가격 업데이트
     }, [prices]);

@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function PortfolioChart() {
     const [activeRange, setActiveRange] = useState('1D');
-    const user = useUser();
+    const {user} = useUser();
 
     if (!user) return null;
 

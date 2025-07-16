@@ -11,7 +11,7 @@ import {useUser} from '@/app/context/UserContext';
 export default function TradingPage() {
 
     const {stockInfos} = usePriceWebSocketData();  // { BTC: { candle, volume, ... } }
-    const user = useUser();
+    const {user} = useUser();
 
     const [btcBalance, setBtcBalance] = useState<number>(0);
     const [currentStockInfo, setcurrentStockInfo] = useState<StockInfo>({
